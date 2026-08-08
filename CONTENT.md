@@ -1,6 +1,7 @@
 # VJ One — quick content guide
 
-Every editable string, link and media path lives in `app/site.config.ts`.
+Next.js App Router, statically prerendered, deployed on Vercel with the default
+preset. Every editable string, link and media path lives in `app/site.config.ts`.
 
 ## Media
 
