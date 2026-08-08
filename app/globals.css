@@ -1,0 +1,884 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ tokens */
+
+:root {
+  --ink: #060606;
+  --warm-white: #f2f0ea;
+  --gold: #b79a61;
+  --muted: rgba(242, 240, 234, 0.62);
+  --faint: rgba(242, 240, 234, 0.34);
+  --hairline: rgba(242, 240, 234, 0.16);
+
+  --sans: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-cinema: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --gutter: clamp(1.25rem, 3vw, 2.75rem);
+  --label: 0.68rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ink);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--ink);
+  color: var(--warm-white);
+  font-family: var(--sans);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.is-locked,
+body.is-viewing {
+  overflow: hidden;
+  height: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+video {
+  display: block;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.label,
+.reel__chapter,
+.reel__scroll span:first-child,
+.topbar__link,
+.card__index,
+.card__meta,
+.cards__hint,
+.preloader-meta,
+.viewer__title,
+.viewer__controls button {
+  font-size: var(--label);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------- preloader */
+
+.preloader {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050505;
+  color: var(--warm-white);
+}
+
+/* Starts lifted to centre-screen and undersized; the exit drops it into the
+   hero position at full scale. `difference` keeps it legible over the film. */
+.preloader-brand-dock {
+  position: absolute;
+  z-index: 3;
+  right: clamp(18px, 1.55vw, 30px);
+  bottom: clamp(76px, 8.5vh, 104px);
+  left: clamp(18px, 1.55vw, 30px);
+  color: #fff;
+  mix-blend-mode: difference;
+  transform: translateY(calc(-50vh + clamp(116px, 10vw, 190px))) scale(0.48);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.preloader-brand-display {
+  --preloader-travel: 48vw;
+  --preloader-start-tracking: 0.22em;
+  position: relative;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  height: 0.73em;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.18em;
+  font-size: clamp(112px, 14.6vw, 300px);
+  font-weight: 700;
+  /* Also the keyframes' end value. Stated here so the lockup still lands on
+     the hero brand's exact metrics if the animation never runs. */
+  letter-spacing: -0.087em;
+  line-height: 0.73;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.preloader-brand-display > span {
+  display: block;
+  opacity: 0;
+  will-change: transform, letter-spacing, opacity;
+}
+
+.preloader-brand-vj {
+  animation: preloader-left-in 1.35s var(--ease-cinema) forwards;
+}
+
+.preloader-brand-one {
+  animation: preloader-right-in 1.35s var(--ease-cinema) forwards;
+}
+
+@keyframes preloader-left-in {
+  0% {
+    transform: translateX(calc(-1 * var(--preloader-travel)));
+    letter-spacing: var(--preloader-start-tracking);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    letter-spacing: -0.087em;
+    opacity: 1;
+  }
+}
+
+@keyframes preloader-right-in {
+  0% {
+    transform: translateX(var(--preloader-travel));
+    letter-spacing: var(--preloader-start-tracking);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    letter-spacing: -0.087em;
+    opacity: 1;
+  }
+}
+
+.preloader-meta {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  color: rgba(240, 238, 232, 0.52);
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.preloader-curtain {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: top center;
+}
+
+.preloader.is-leaving {
+  visibility: hidden;
+  background: transparent;
+  pointer-events: none;
+  transition: visibility 0s linear 1.46s;
+}
+
+.preloader.is-leaving .preloader-meta {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
+  transition:
+    opacity 260ms ease,
+    transform 500ms var(--ease-out);
+}
+
+.preloader.is-leaving .preloader-brand-dock {
+  transform: translateY(0) scale(1);
+  transition: transform 1s var(--ease-cinema);
+}
+
+/* Held back a full second: the lockup finishes its descent before the film
+   is uncovered. */
+.preloader.is-leaving .preloader-curtain {
+  transform: scaleY(0);
+  transition: transform 420ms var(--ease-cinema) 1s;
+}
+
+/* Set by the inline script in the document head, so a returning visitor never
+   sees a frame of the intro. */
+[data-vj-returning="true"] .preloader,
+[data-vj-reduced="true"] .preloader {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- backdrop */
+
+/* One continuous shot behind the whole page — never unmounts, never repeats.
+   Lives inside the sticky viewport (not fixed to the page) so blended type in
+   the same viewport can actually composite against it. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--ink);
+}
+
+.backdrop__media {
+  position: absolute;
+  inset: 0;
+  transform: scale(1);
+  filter: blur(0px) brightness(1);
+  transition:
+    filter 1s var(--ease-out),
+    transform 1s var(--ease-out);
+}
+
+/* Only the backdrop defocuses; the open film stays untouched. */
+.backdrop.is-defocused .backdrop__media {
+  filter: blur(26px) brightness(0.4) saturate(0.85);
+  /* Overscanned so the blur never reveals a soft transparent edge. */
+  transform: scale(1.08);
+}
+
+.hero-canvas,
+.hero-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Texture source for WebGL: present and decoding, but never painted. */
+.backdrop__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.backdrop__video.is-visible {
+  filter: brightness(0.82) contrast(1.04);
+  transition: opacity 1.6s var(--ease-out);
+}
+
+.backdrop__video.is-visible.is-revealed {
+  opacity: 1;
+}
+
+.backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 6, 6, 0.55) 0%,
+    rgba(6, 6, 6, 0.1) 32%,
+    rgba(6, 6, 6, 0.14) 60%,
+    rgba(6, 6, 6, 0.74) 100%
+  );
+}
+
+/* ------------------------------------------------------------------ topbar */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--gutter);
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3em;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar__brand-one {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.topbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.45s var(--ease-out);
+}
+
+.topbar__link i {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.topbar__link:hover {
+  border-color: var(--hairline);
+}
+
+/* -------------------------------------------------------------------- reel */
+
+.stage {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scroll length drives the whole choreography; the viewport stays pinned. */
+.reel {
+  position: relative;
+  height: 230vh;
+}
+
+.reel__viewport {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Mirrors `.preloader-brand-dock` at rest, to the pixel, so the two elements
+   swap in the same frame with nothing moving. */
+.reel__brand {
+  position: absolute;
+  z-index: 3;
+  right: clamp(18px, 1.55vw, 30px);
+  bottom: clamp(76px, 8.5vh, 104px);
+  left: clamp(18px, 1.55vw, 30px);
+  color: #fff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+}
+
+.reel__brand-display {
+  position: relative;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  height: 0.73em;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.18em;
+  overflow: hidden;
+  font-size: clamp(112px, 14.6vw, 300px);
+  font-weight: 700;
+  letter-spacing: -0.087em;
+  line-height: 0.73;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.reel__brand-display > span {
+  display: block;
+  opacity: 0;
+}
+
+.reel.is-ready .reel__brand-display > span {
+  opacity: 1;
+}
+
+.reel__intro,
+.reel__grid {
+  position: absolute;
+  inset: 0;
+  padding: calc(var(--gutter) * 1.6) var(--gutter) var(--gutter);
+}
+
+/* Deliberately no z-index, transform, filter or isolation on this element or
+   `.reel__headline`: each would make it a stacking context and cut the blended
+   headline off from the film painted below it. */
+.reel__intro {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  /* Faded-out type must never swallow clicks meant for the grid. */
+  pointer-events: none;
+}
+
+.reel__intro a {
+  pointer-events: auto;
+}
+
+.reel__chapter {
+  margin: 0;
+  color: var(--muted);
+}
+
+.reel__headline {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  /* Both ends kept to the minimum that avoids a collision, so the two lines
+     are thrown as far apart as the frame allows. */
+  padding: 2px 0 clamp(1rem, 2.2vh, 1.5rem);
+  font-weight: 400;
+}
+
+.reel__line {
+  display: block;
+  line-height: 0.84;
+}
+
+/* Belt and braces for the window before GSAP mounts. The curtain opens ~500ms
+   before the brand hands over, so anything visible here appears next to the
+   lockup. GSAP re-applies these same start states on mount. */
+.reel:not(.is-ready) .reel__line {
+  clip-path: inset(105% 0% 0% 0%);
+}
+
+.reel:not(.is-ready) .reel__chapter--one,
+.reel:not(.is-ready) .reel__foot > * {
+  opacity: 0;
+}
+
+.reel__line--lead {
+  align-self: flex-start;
+  font-size: clamp(3.6rem, 16.5vw, 19rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  /* Inverts against the film instead of sitting flatly on top of it. */
+  mix-blend-mode: difference;
+}
+
+.reel__line--trail {
+  align-self: flex-end;
+  text-align: right;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(3.6rem, 16vw, 18rem);
+  letter-spacing: -0.015em;
+}
+
+.reel__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+/* Statement, not a call to action — no link, no hover, nothing to click. */
+.reel__statement {
+  display: grid;
+  gap: 0.02em;
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: var(--warm-white);
+}
+
+.reel__statement span:last-child {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.reel__scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.reel__scroll-dot {
+  display: block;
+  width: 1px;
+  height: clamp(28px, 5vh, 52px);
+  background: linear-gradient(to bottom, var(--gold), transparent);
+}
+
+/* ------------------------------------------------------------------- cards */
+
+.reel__grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.25rem, 3.5vh, 2.5rem);
+  pointer-events: none;
+}
+
+.reel__grid.is-live {
+  pointer-events: auto;
+}
+
+.reel__chapter--two {
+  color: var(--gold);
+}
+
+/* Dims the grid itself, not `.reel__grid` — GSAP owns that element's opacity
+   and an inline value would win. */
+.reel__grid.is-behind .cards,
+.reel__grid.is-behind .reel__chapter--two,
+.reel__grid.is-behind .cards__hint {
+  opacity: 0.18;
+  transition: opacity 0.6s var(--ease-out);
+}
+
+.cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 1.4vw, 1.4rem);
+  width: 100%;
+  transition: opacity 0.6s var(--ease-out);
+}
+
+.card {
+  position: relative;
+  flex: 0 1 clamp(150px, 19vw, 330px);
+  height: min(64vh, 660px);
+}
+
+.card__hit {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: rgba(8, 12, 18, 0.25);
+  transition:
+    border-color 0.6s var(--ease-out),
+    transform 0.8s var(--ease-out);
+}
+
+.card:hover .card__hit {
+  border-color: rgba(242, 240, 234, 0.34);
+}
+
+.card__media {
+  position: absolute;
+  inset: 0;
+}
+
+.card__media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* No blur anywhere on the cards — the films stay plainly readable. This is a
+   plain gradient, present only so the caption and index keep contrast. */
+.card__frost {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 6, 6, 0.42) 0%,
+    rgba(6, 6, 6, 0.08) 38%,
+    rgba(6, 6, 6, 0.68) 100%
+  );
+  transition: opacity 0.7s var(--ease-out);
+}
+
+.card:hover .card__frost {
+  opacity: 0.72;
+}
+
+.card__index {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: var(--faint);
+}
+
+.card__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 0.75rem;
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 2.2vw, 2.6rem);
+  line-height: 1.05;
+  transition: opacity 0.6s var(--ease-out);
+}
+
+.card:hover .card__title {
+  opacity: 0.85;
+}
+
+/* Selecting a film clears its centre label so nothing sits over the footage
+   as it expands. */
+.card.is-active .card__title {
+  opacity: 0;
+}
+
+.card__meta {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1.1rem;
+  color: var(--muted);
+  font-size: 0.6rem;
+  line-height: 1.5;
+}
+
+.cards__hint {
+  margin: 0;
+  color: var(--faint);
+  transition: opacity 0.6s var(--ease-out);
+}
+
+/* ------------------------------------------------------------------ viewer */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+}
+
+.viewer__dismiss {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(6, 6, 6, 0.4);
+  cursor: pointer;
+}
+
+/* Native 9:16, capped so the frame always fits the shorter axis. */
+.viewer__frame {
+  position: relative;
+  height: min(88vh, calc((100vw - var(--gutter) * 2) * 16 / 9));
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65);
+}
+
+.viewer__frame video {
+  width: 100%;
+  height: 100%;
+  /* No crop, no grade, no filter — the film exactly as shot. */
+  object-fit: contain;
+}
+
+.viewer__bar {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  pointer-events: none;
+}
+
+.viewer__title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7em;
+  color: var(--warm-white);
+}
+
+.viewer__title i {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.viewer__controls {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.viewer__controls button {
+  pointer-events: auto;
+  padding: 0.6em 1.1em;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: rgba(6, 6, 6, 0.55);
+  backdrop-filter: blur(14px);
+  transition: border-color 0.4s var(--ease-out);
+}
+
+.viewer__controls button:hover {
+  border-color: var(--gold);
+}
+
+/* ------------------------------------------------------------------ cursor */
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    width 0.4s var(--ease-out),
+    height 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out);
+}
+
+.cursor.is-visible {
+  opacity: 1;
+}
+
+.cursor.is-active {
+  width: 54px;
+  height: 54px;
+  border-color: var(--gold);
+}
+
+body.has-cursor,
+body.has-cursor a,
+body.has-cursor button {
+  cursor: none;
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@media (max-width: 900px) {
+  :root {
+    --label: 0.6rem;
+  }
+
+  .preloader-brand-dock {
+    right: 12px;
+    bottom: 58px;
+    left: 12px;
+    transform: translateY(calc(-50vh + 112px)) scale(0.62);
+  }
+
+  .preloader-brand-display {
+    --preloader-travel: 54vw;
+    --preloader-start-tracking: 0.12em;
+    gap: 0.16em;
+    font-size: clamp(46px, 14.2vw, 62px);
+    line-height: 0.78;
+  }
+
+  .preloader-meta {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Must track the dock override above or the handoff jumps. */
+  .reel__brand {
+    right: 12px;
+    bottom: 58px;
+    left: 12px;
+  }
+
+  .reel__brand-display {
+    gap: 0.16em;
+    font-size: clamp(46px, 14.2vw, 62px);
+    letter-spacing: -0.09em;
+    line-height: 0.78;
+  }
+
+  .reel__intro,
+  .reel__grid {
+    padding-top: calc(var(--gutter) * 3.4);
+  }
+
+  .reel__line--lead,
+  .reel__line--trail {
+    font-size: clamp(3rem, 19vw, 8rem);
+  }
+
+  .reel__foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .reel__scroll {
+    align-self: center;
+  }
+
+  /* Four across cannot breathe on a phone; two rows of two can. */
+  .cards {
+    flex-wrap: wrap;
+    max-width: 420px;
+  }
+
+  .card {
+    flex: 0 1 calc(50% - 0.5rem);
+    height: min(31vh, 290px);
+  }
+
+  .card__title {
+    font-size: 1.15rem;
+  }
+
+  .viewer__bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .cursor {
+    display: none;
+  }
+
+  .backdrop__video.is-visible {
+    opacity: 1;
+  }
+}
